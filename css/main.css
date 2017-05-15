@@ -1,0 +1,38 @@
+/*
+.container{
+    background-color:#EDEDED;
+    display:flex;
+}
+.fixed{
+    background-color:#A7A7A7;
+    width: 200px;
+    padding: 10px;
+}
+.flex-item{
+    background-color:#CCCCCC;
+    flex-grow: 1;
+    padding: 10px;
+    max-width: 750px;
+}*/
+  body {
+    padding-top: 70px;
+  }
+hr{ 
+    display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    margin-left: auto;
+    margin-right: auto;
+    border-style: inset;
+    border-width: 1px;
+} 
+header{
+	background-color: #F0EFD4
+}
+#wait{
+	margin-top: 20px;
+	display: none;
+}
+#message{
+	display: none;
+}
