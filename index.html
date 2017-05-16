@@ -35,8 +35,8 @@
 						<h4 class="text-center">Użytkownicy</h4>
 						<p><textarea placeholder="login/nazwa usera per linia" class="form-control" rows="12" cols="30" psname="user" id="userNames"></textarea></p>
 						<p><label class="small"><input type="checkbox" id="caleAd" checked>Szukaj również poza tą witryną</label></p>
-						<p><button id="userSearch" class="btn btn-block btn-success btn-sm">Szukaj użytkowników</button></p>
-						<p><button id="zamienIN" class="btn btn-block btn-info btn-sm">Zamień imię/nazwisko</button></p>
+						<p><button id="userSearch" class="btn btn-block btn-info btn-sm">Szukaj użytkowników</button></p>
+						<p><button id="zamienIN" class="btn btn-block btn-warning btn-sm">Zamień imię/nazwisko</button></p>
 						<hr>
 					</div>
 				</div>
@@ -44,7 +44,7 @@
 					<h4 class="text-center">Użytkowinicy - dane</h4>
 					<table id="content" class="table table-bordered table-hover">
 						<thead>
-							<th><input type="checkbox" id="alltrch"></input></th>
+							<th><input type="checkbox" id="alltrch1"></input></th>
 							<th>ID</th>
 							<th>NAZWA</th>
 							<th>LOGIN</th>
@@ -58,10 +58,11 @@
 					<div data-spy="affix" data-offset-top="50">
 						<h4 class="text-center">Grupy</h4>
 						<p><textarea placeholder="nazwa grupy per linia" class="form-control" rows="12" cols="30" psname="group" ></textarea></p>
-						<p><button id="groupSearch" class="btn btn-block btn-success btn-sm">Szukaj grup</button></p>
+						<p><button id="groupSearch" class="btn btn-block btn-info btn-sm">Szukaj grup</button></p>
 						<hr>
-						<p><button id="allGroups" class="btn btn-block btn-success btn-sm" onclick="getAllGroups();return false;">Wszystkie grupy</button></p>
+						<p><button id="allGroups" class="btn btn-block btn-info btn-sm" onclick="$('#tbGroups').empty();getAllGroups();return false;">Wszystkie grupy</button></p>
 						<hr>
+						<p><button id="addUsersToGroups" class="btn btn-block btn-success btn-sm"><small>Dodaj zaznaczonych userów do zaznaczonych grup.</small></button></p>
 					</div>
 				</div>
 				<div class="col-lg-4 col-md-9">

@@ -4,45 +4,29 @@ $(document).ready(function() {
 	$("#userSearch").on('click', function(event) {
 		event.preventDefault();
 		$("#tbUsers").empty();
+		var allSearchAjax = [];
+		$("#wait").show();
 		$.each($('textarea[psname$=user]').val().split(/\n/), function (i, line) {
-			if (line)usersSearch(line);
-				//$SP().addressbook(line, {limit:100}, function(people) {
-					/*
-					if (people.length == 0)setMessage("Nie znaleziono: "+line, false);
-					var peopleInGroups = $.grep(people,function(el,i){
-						return ( el.UserInfoID != -1);
-					});
-					var trUser = "";
-					for (var i=0; i < peopleInGroups.length; i++) {
-						//console.log(people[i].AccountName+ "-"+ people[i].DisplayName);
-						trUser+="<tr id="+peopleInGroups[i].UserInfoID+">"+
-						"<td><input type='checkbox' id='trch' login='"+peopleInGroups[i].AccountName+"' name='"+peopleInGroups[i].DisplayName+"' email='"+peopleInGroups[i].Email+"'></td>"+
-						"<td>"+peopleInGroups[i].UserInfoID+"</td>"+
-						"<td><a href='/_layouts/userdisp.aspx?ID="+peopleInGroups[i].UserInfoID+"' target='_blank'>" + peopleInGroups[i].DisplayName + "</a></td>"+
-						"<td>"+peopleInGroups[i].AccountName+"</td>"+
-						"<td></td>"+
-						"</tr>";
-				  	}
-				  	if($("#caleAd").is(":checked")){
-				  		var peopleNotInGroups = $.grep(people,function(el,i){
-							return ( el.UserInfoID == -1);
-						});
-						for (var i=0; i < peopleNotInGroups.length; i++) {
-						trUser+="<tr id="+peopleNotInGroups[i].UserInfoID+">"+
-						"<td><input type='checkbox' id='trch' login='"+peopleNotInGroups[i].AccountName+"'></td>"+
-						"<td>"+peopleNotInGroups[i].UserInfoID+"</td>"+
-						"<td>" + peopleNotInGroups[i].DisplayName + "</td>"+
-						"<td>"+peopleNotInGroups[i].AccountName+"</td>"+
-						"<td></td>"+
-						"</tr>";
-						}
-				  	}
-				  	$("#tbUsers").append(trUser);
-					for (var i=0; i < peopleInGroups.length; i++) {
-						getGroups(peopleInGroups[i].AccountName, peopleInGroups[i].UserInfoID);
-					}
-					*/
-				//});
+			if (line)allSearchAjax.push(usersSearch(line));
+		});
+		Promise.all(allSearchAjax).then(function() {
+			$("#wait").hide();
+		},function(error) {
+			$("#wait").hide();
+		});
+	});
+	$("#groupSearch").on('click', function(event) {
+		event.preventDefault();
+		$("#tbGroups").empty();
+		var allSearchAjax = [];
+		$("#wait").show();
+		$.each($('textarea[psname$=group]').val().split(/\n/), function (i, line) {
+			if (line)allSearchAjax.push(getAllGroups(line));
+		});
+		Promise.all(allSearchAjax).then(function() {
+			$("#wait").hide();
+		},function(error) {
+			$("#wait").hide();
 		});
 	});
 
@@ -63,17 +47,71 @@ $(document).ready(function() {
 	    $("textarea[psname$=user]").val(convLines.join("\n"));
 	});	
 
-    $("#alltrch").on('click', function(){
-        $('input[id^=trch]').prop('checked', $(this).is(':checked'));
+	$("#addUsersToGroups").on('click', function(event) {
+		event.preventDefault();
+		var usersXML = selectedUsersCollection();
+		var allSearchAjax = [];
+		$("#wait").show();
+		$('input[id^=trch2]:checked').each(function(index, el) {
+			allSearchAjax.push(addUsersCollectionToGroup($(el).attr('groupName'),usersXML));
+		});
+		Promise.all(allSearchAjax).then(function() {
+			$("#userSearch").trigger( "click" );
+		},function(error) {
+			$("#wait").hide();
+		});
+	});
+
+    $("#alltrch1").on('click', function(){
+        $('input[id^=trch1]').prop('checked', $(this).is(':checked'));
     });
     $("#alltrch2").on('click', function(){
         $('input[id^=trch2]').prop('checked', $(this).is(':checked'));
     });
+
+    //Utworzenie listy do logów jeśli nie istnieje
+    $("#wait").show();
+	$SP().webService({ 
+		service:"Lists",
+		operation:"GetListCollection",
+		soapURL:"http://schemas.microsoft.com/sharepoint/soap/"
+	}).then(function(response) {
+		//console.log(response);
+		var logListExist = false;
+		$(response).find("List").each(function(){
+			var listName =$(this).attr("Title");
+			if (listName == "Logs")logListExist = true;
+		});
+	  	if(!logListExist)
+	  		$SP().webService({ 
+				service:"Lists",
+				operation:"AddList",
+				soapURL:"http://schemas.microsoft.com/sharepoint/soap/",
+				properties:{
+	    			listName: "Logs",
+					description: "List for operations loging.",
+					templateID: 100
+	  			}
+			}).then(function(response) {
+		  		setMessage("Utwrzono listę logów.", true);
+		  		$("#wait").hide();
+			},function(error) { 
+				setMessage("Error: "+error, false); 
+				$("#wait").hide();
+				console.log(error);
+			});
+	  	else $("#wait").hide();
+	},function(error) { 
+		setMessage("Error: "+error, false); 
+		$("#wait").hide();
+		console.log(error);
+	});
+	///////////////////////////////////////////////////
+
 });
 
 function usersSearch(line){
-	$("#wait").show();
-	$SP().webService({ 
+	return $SP().webService({ 
 		service:"People",
 	  	operation:"SearchPrincipals",
 	  	soapURL:"http://schemas.microsoft.com/sharepoint/soap/",
@@ -83,60 +121,61 @@ function usersSearch(line){
 			principalType: "User"
   		}
 	}).then(function(response) {
-  	//console.log(response);
-  	var people = [];
-  	$(response).find("PrincipalInfo").each(function(index, el) {
-  		people.push({
-  			AccountName: $(el).find("AccountName").text(),
-  			UserInfoID: $(el).find("UserInfoID").text(),
-  			DisplayName: $(el).find("DisplayName").text(),
-  			Email: $(el).find("Email").text(),
-  			Department: $(el).find("Department").text(),
-  			Title: $(el).find("Title").text()
-  		})
-  	});
-	if (people.length == 0)setMessage("Nie znaleziono: "+line, false);
-	var peopleInGroups = $.grep(people,function(el,i){
-		return ( el.UserInfoID != -1);
-	});
-	var trUser = "";
-	for (var i=0; i < peopleInGroups.length; i++) {
-		trUser+="<tr id="+peopleInGroups[i].UserInfoID+">"+
-		"<td><input type='checkbox' id='trch' login='"+peopleInGroups[i].AccountName+"' name='"+peopleInGroups[i].DisplayName+"' email='"+peopleInGroups[i].Email+"'></td>"+
-		"<td>"+peopleInGroups[i].UserInfoID+"</td>"+
-		"<td><a href='/_layouts/userdisp.aspx?ID="+peopleInGroups[i].UserInfoID+"' target='_blank'>" + peopleInGroups[i].DisplayName + "</a></td>"+
-		"<td>"+peopleInGroups[i].AccountName+"</td>"+
-		"<td></td>"+
-		"</tr>";
-  	}
-  	if($("#caleAd").is(":checked")){
-  		var peopleNotInGroups = $.grep(people,function(el,i){
-			return ( el.UserInfoID == -1);
+	  	var people = [];
+	  	$(response).find("PrincipalInfo").each(function(index, el) {
+	  		var splitedLogin = $(el).find("AccountName").text().split("\\");
+			var onlyDomain = splitedLogin[0];
+			var onlyLogin = splitedLogin[1];
+	  		people.push({
+	  			AccountName: $(el).find("AccountName").text(),
+	  			UserInfoID: $(el).find("UserInfoID").text(),
+	  			DisplayName: $(el).find("DisplayName").text(),
+	  			Email: $(el).find("Email").text(),
+	  			Department: $(el).find("Department").text(),
+	  			Title: $(el).find("Title").text(),
+	  			AccountName2: onlyDomain+'\\\\'+onlyLogin
+	  		})
+	  	});
+		if (people.length == 0)setMessage("Nie znaleziono: "+line, false);
+		var peopleInGroups = $.grep(people,function(el,i){
+			return ( el.UserInfoID != -1);
 		});
-		for (var i=0; i < peopleNotInGroups.length; i++) {
-		trUser+="<tr id="+peopleNotInGroups[i].UserInfoID+">"+
-		"<td><input type='checkbox' id='trch' login='"+peopleNotInGroups[i].AccountName+"'></td>"+
-		"<td>"+peopleNotInGroups[i].UserInfoID+"</td>"+
-		"<td>" + peopleNotInGroups[i].DisplayName + "</td>"+
-		"<td>"+peopleNotInGroups[i].AccountName+"</td>"+
-		"<td></td>"+
-		"</tr>";
+		var trUser = "";
+		for (var i=0; i < peopleInGroups.length; i++) {
+			trUser+="<tr id="+peopleInGroups[i].UserInfoID+">"+
+			"<td><input type='checkbox' id='trch1' login='"+peopleInGroups[i].AccountName+"' login2='"+peopleInGroups[i].AccountName2+"' name='"+peopleInGroups[i].DisplayName+"' email='"+peopleInGroups[i].Email+"'></td>"+
+			"<td>"+peopleInGroups[i].UserInfoID+"</td>"+
+			"<td><a href='/_layouts/userdisp.aspx?ID="+peopleInGroups[i].UserInfoID+"' target='_blank'>" + peopleInGroups[i].DisplayName + "</a></td>"+
+			"<td>"+peopleInGroups[i].AccountName+"</td>"+
+			'<td><img id="wait'+peopleInGroups[i].UserInfoID+'" src="img/wait.gif" alt="loading..." class="pull-right img-responsive"></td>'+
+			"</tr>";
+	  	}
+	  	if($("#caleAd").is(":checked")){
+	  		var peopleNotInGroups = $.grep(people,function(el,i){
+				return ( el.UserInfoID == -1);
+			});
+			for (var i=0; i < peopleNotInGroups.length; i++) {
+			trUser+="<tr id="+peopleNotInGroups[i].UserInfoID+">"+
+			"<td><input type='checkbox' id='trch1' login='"+peopleNotInGroups[i].AccountName+"' login2='"+peopleNotInGroups[i].AccountName2+"' name='"+peopleNotInGroups[i].DisplayName+"' email='"+peopleNotInGroups[i].Email+"'></td>"+
+			"<td>"+peopleNotInGroups[i].UserInfoID+"</td>"+
+			"<td>" + peopleNotInGroups[i].DisplayName + "</td>"+
+			"<td>"+peopleNotInGroups[i].AccountName+"</td>"+
+			'<td></td>'+
+			"</tr>";
+			}
+	  	}
+	  	$("#tbUsers").append(trUser);
+		for (var i=0; i < peopleInGroups.length; i++) {
+			getGroups(peopleInGroups[i].AccountName, peopleInGroups[i].UserInfoID);
 		}
-  	}
-  	$("#tbUsers").append(trUser);
-	for (var i=0; i < peopleInGroups.length; i++) {
-		getGroups(peopleInGroups[i].AccountName, peopleInGroups[i].UserInfoID);
-	}
-	$("#wait").hide();
 	},function(error) { 
-		setMessage("Error: "+error, true); 
-		$("#wait").hide();
+		setMessage("Error: "+error, true);
+		console.log(error);
 	}); 
 }
 
 function getGroups(login,userId){
-	$("#wait").show();
- 	$SP().webService({
+ 	return $SP().webService({
 		service:"UserGroup",
 		operation:"GetGroupCollectionFromUser",
 		soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
@@ -152,28 +191,55 @@ function getGroups(login,userId){
 		var onlyLogin = splitedLogin[1];
 		$(response).find("Group").each(function(){
 			var cGroupName = $(this).attr("Name");
-			sgroupsLi += '<li class="list-group-item"><small>'+cGroupName+'</small><button class="btn btn-danger btn-xs" onclick="rmUserFromGroup(\''+onlyDomain+'\\\\'+onlyLogin+'\',\''+cGroupName+'\');$(this).parent().remove();return false;"><small>x</small></button></li>';
+			sgroupsLi += '<li class="list-group-item"><small>'+cGroupName+'</small>'+
+			'<button class="btn btn-danger btn-xs" onclick="rmUserFromGroup(\''+onlyDomain+'\\\\'+onlyLogin+'\',\''+cGroupName+'\');$(this).parent().remove();return false;"><small>x</small></button>'+
+			'<button class="btn btn-success btn-xs" onclick="event.preventDefault();addUsersCollectionToGroup(\''+cGroupName+'\',selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></li>';
 			userGroups.push(cGroupName);
 			i++;
 		});
-		if (i>0)sgroupsLi +='<li class="list-group-item"><button class="btn btn-danger btn-xs" id="dlg'+userId+'"><small>Usuń z tych grup</small></button></li>';
+		if (i>0){
+			sgroupsLi +='<li class="list-group-item"><button class="btn btn-danger btn-xs" id="dlg'+userId+'"><small>Usuń z tych grup</small></button>'+
+			'<button class="btn btn-success btn-xs" id="addg'+userId+'"><small>Dodaj zaz. do tych grup</small></button></li>';
+		}
 		sgroups.html(sgroupsLi);
-		$("#"+userId+" td:last").append(sgroups);
+		$("#"+userId+" td:last").html(sgroups);
 		if (i>0){
 			$("#dlg"+userId).on('click', function(event) {
 				event.preventDefault();
 				if(confirm("Czy napewno chcesz usunąć usera "+login+" z wszystkich grup ?")){
+					var allSearchAjax = [];
+					$("#wait").show();
 					for (var j=0; j < userGroups.length; j++) {
-						rmUserFromGroup(login,userGroups[j]);
+						allSearchAjax.push(rmUserFromGroup(login,userGroups[j]));
 					}
-					$("#g"+userId).remove();
+					Promise.all(allSearchAjax).then(function() {
+						$("#wait").hide();
+						$("#g"+userId).remove();
+					},function(error) {
+						$("#wait").hide();
+					});
+				}
+			});
+			$("#addg"+userId).on('click', function(event) {
+				event.preventDefault();
+				if(confirm("Czy napewno chcesz doda zaznaczonuch do wszystkich grup usera "+login+" ?")){
+					var allSearchAjax = [];
+					$("#wait").show();
+					var usersXML = selectedUsersCollection();
+					for (var k=0; k < userGroups.length; k++) {
+						allSearchAjax.push(addUsersCollectionToGroup(userGroups[k],usersXML));
+					}
+					Promise.all(allSearchAjax).then(function() {
+						$("#userSearch").trigger( "click" );
+					},function(error) {
+						$("#wait").hide();
+					});
 				}
 			});
 		}
-		$("#wait").hide();
 	},function(error) { 
 		setMessage("Error: "+error, true); 
-		$("#wait").hide();
+		console.log(error);
 	});
 }
 
@@ -182,14 +248,13 @@ function setMessage(message, log){
 	$("#message").fadeIn().append('<p><strong>'+message+'</strong></p>')
 	setTimeout(function() {
   		$("#message").fadeOut().empty();
-	}, 10000);
+	}, 5000);
 	if(log == true)
-		$SP().list("Tools","/admin").add({Title: message});
+		$SP().list("Logs").add({Title: message});
 }
 
 function rmUserFromGroup(login,groupName){
-	$("#wait").show();
-	$SP().webService({ 
+	return $SP().webService({ 
 		service:"UserGroup",
 		operation:"RemoveUserFromGroup",
 		soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
@@ -199,25 +264,22 @@ function rmUserFromGroup(login,groupName){
 	  	}
 	}).then(function(response) {
 	  	setMessage("Usunięto "+login+" z "+groupName, true);
-	  	$("#wait").hide();
 	}, 
 	function(error) { 
-		setMessage("Error: "+error, true); 
-		$("#wait").hide();
+		setMessage("Error: "+error, true);
+		console.log(error);
 	});
 }
 
 function getAllGroups(groupName){
-	$("#wait").show();
-	$SP().webService({ 
+	return $SP().webService({ 
 	service:"UserGroup",
 	operation:"GetGroupCollectionFromSite",
 	soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/"
 	}).then(function(response) {
 		var trGroup = '';
-		$("#tbGroups").empty();
 		$(response).find("Group").each(function(){
-			if(typeof groupName == 'undefined'|| $(this).attr("Name").search(groupName) > -1)
+			if(typeof groupName == 'undefined'|| $(this).attr("Name").search(groupName) > -1){
 				trGroup +="<tr id="+$(this).attr("ID")+">"+
 				"<td><input type='checkbox' id='trch2' groupName='"+$(this).attr("Name")+"'></td>"+
 				"<td><a href='/_layouts/editgrp.aspx?Group="+$(this).attr("Name")+"' target='_blank'>" + $(this).attr("ID") + "</a></td>"+
@@ -225,19 +287,18 @@ function getAllGroups(groupName){
 				"<td><small>"+$(this).attr("Description")+"</small></td>"+
 				'<td><button class="btn btn-danger btn-xs" onclick="rmGroup(\''+$(this).attr("Name")+'\');$(this).parent().parent().remove();return false;"><small>x</small></button></td>'+
 				"</tr>";
+			}
 		});
 		$("#tbGroups").append(trGroup);
-		$("#wait").hide();
 	}, 
 	function(error) { 
 		setMessage("Error: "+error, true); 
-		$("#wait").hide();
+		console.log(error);
 	});
 }
 
 function rmGroup(groupName){
 	if(confirm("Czy napewno chcesz usunąć grupę:"+ groupName +"?")){
-		$("#wait").show();
 		$SP().webService({ 
 			service:"UserGroup",
 			operation:"RemoveGroup",
@@ -247,23 +308,41 @@ function rmGroup(groupName){
 			}
 		}).then(function(response) {
 		  	setMessage("Usunięto grupę: "+groupName, true);
-		  	$("#wait").hide();
 		}, 
 		function(error) { 
 			setMessage("Error: "+error, true); 
-			$("#wait").hide();
+			console.log(error);
 		});
 	}
 }
 
 function selectedUsersCollection(){
 	var xml = '<Users>';
-	$('input[id^=trch]:checked').each(function(index, el) {
-		xml+='<User LoginName="'+$(el).attr("login")+'"'+ 
-      	'Email="'+$(el).attr("email")+'"'+
-      	'Name="'+$(el).attr("name")+'"'+
-      	'Notes=""/>'
+	$('input[id^=trch1]:checked').each(function(index, el) {
+		xml+='<User LoginName="'+$(el).attr("login")+'" '+ 
+      	'Email="'+$(el).attr("email")+'" '+
+      	'Name="'+$(el).attr("name")+'" '+
+      	'Notes="" />'
 	});
 	xml+='</Users>';
 	return(xml);
+}
+
+function addUsersCollectionToGroup(groupName, usersXML){
+	return $SP().webService({ 
+		service:"UserGroup",
+		operation:"AddUserCollectionToGroup",
+		soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
+		properties:{
+			groupName: groupName,
+			usersInfoXml: usersXML
+			}
+	}).then(function(response) {
+		$(usersXML).find("User").each(function(index2, el2) {
+			setMessage("Usera: "+$(el2).attr('LoginName')+" dodano do grupy: "+groupName, true);
+		});
+	},function(error) { 
+		setMessage("Error: "+error, true); 
+		console.log(error);
+	});
 }
