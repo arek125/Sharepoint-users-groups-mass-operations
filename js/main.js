@@ -1,33 +1,55 @@
+var interVal = 100;
 $(document).ready(function() {
 	//$("#includedContent").load("/_layouts/usergroup/userGroup.html",main);
+	$("#content2").tablesorter();
+	$("#content").tablesorter();
 	$("#url").html("<a href='"+window.location.origin+"'>"+window.location.hostname+"</a>");
+
 	$("#userSearch").on('click', function(event) {
 		event.preventDefault();
 		$("#tbUsers").empty();
-		var allSearchAjax = [];
+		var allSearchAjax = [], op = 0;
 		$("#wait").show();
 		$.each($('textarea[psname$=user]').val().split(/\n/), function (i, line) {
-			if (line)allSearchAjax.push(usersSearch(line));
+			if (line){
+				setTimeout(function(){
+					allSearchAjax.push(usersSearch(line));
+				}, op);
+				op+=interVal;
+			}
 		});
-		Promise.all(allSearchAjax).then(function() {
-			$("#wait").hide();
-		},function(error) {
-			$("#wait").hide();
-		});
+		setTimeout(function(){
+			$.when.apply($, allSearchAjax).then(function() {
+				$("#content").trigger("update"); 
+				$("#content").find("th:contains(NAZWA)").trigger("sort");
+				$("#wait").hide();
+			},function(error) {
+				$("#wait").hide();
+			});
+		}, op);	
 	});
 	$("#groupSearch").on('click', function(event) {
 		event.preventDefault();
 		$("#tbGroups").empty();
-		var allSearchAjax = [];
+		var allSearchAjax = [], op = 0;
 		$("#wait").show();
 		$.each($('textarea[psname$=group]').val().split(/\n/), function (i, line) {
-			if (line)allSearchAjax.push(getAllGroups(line));
+			if (line){
+				setTimeout(function(){
+					allSearchAjax.push(getAllGroups(line));
+				}, op);
+				op+=interVal;
+			}
 		});
-		Promise.all(allSearchAjax).then(function() {
-			$("#wait").hide();
-		},function(error) {
-			$("#wait").hide();
-		});
+		setTimeout(function(){
+			$.when.apply($, allSearchAjax).then(function() {
+				$("#content2").trigger("update"); 
+				$("#content2").find("th:contains(NAZWA)").trigger("sort");
+				$("#wait").hide();
+			},function(error) {
+				$("#wait").hide();
+			});
+		}, op);
 	});
 
 	$("#zamienIN").on('click', function(event) {
@@ -50,16 +72,21 @@ $(document).ready(function() {
 	$("#addUsersToGroups").on('click', function(event) {
 		event.preventDefault();
 		var usersXML = selectedUsersCollection();
-		var allSearchAjax = [];
+		var allSearchAjax = [], op=0;
 		$("#wait").show();
 		$('input[id^=trch2]:checked').each(function(index, el) {
-			allSearchAjax.push(addUsersCollectionToGroup($(el).attr('groupName'),usersXML));
+			setTimeout(function(){
+				allSearchAjax.push(addUsersCollectionToGroup($(el).attr('groupName'),usersXML));
+			}, op);
+			op+=interVal;
 		});
-		Promise.all(allSearchAjax).then(function() {
-			$("#userSearch").trigger( "click" );
-		},function(error) {
-			$("#wait").hide();
-		});
+		setTimeout(function(){
+			$.when.apply($, allSearchAjax).then(function() {
+				$("#userSearch").trigger( "click" );
+			},function(error) {
+				$("#wait").hide();
+			});
+		}, op);
 	});
 
     $("#alltrch1").on('click', function(){
@@ -207,33 +234,43 @@ function getGroups(login,userId){
 			$("#dlg"+userId).on('click', function(event) {
 				event.preventDefault();
 				if(confirm("Czy napewno chcesz usunąć usera "+login+" z wszystkich grup ?")){
-					var allSearchAjax = [];
+					var allSearchAjax = [],j=0;
 					$("#wait").show();
-					for (var j=0; j < userGroups.length; j++) {
+					//for (var j=0; j < userGroups.length; j++) {
+					var inter = setInterval(function () {
 						allSearchAjax.push(rmUserFromGroup(login,userGroups[j]));
-					}
-					Promise.all(allSearchAjax).then(function() {
-						$("#wait").hide();
-						$("#g"+userId).remove();
-					},function(error) {
-						$("#wait").hide();
-					});
+						j+=1;
+						if(j==userGroups.length){
+							$.when.apply($, allSearchAjax).then(function() {
+								$("#wait").hide();
+								$("#g"+userId).remove();
+							},function(error) {
+								$("#wait").hide();
+							});
+							clearInterval(inter);
+						}
+					},interVal);
 				}
 			});
 			$("#addg"+userId).on('click', function(event) {
 				event.preventDefault();
 				if(confirm("Czy napewno chcesz doda zaznaczonuch do wszystkich grup usera "+login+" ?")){
-					var allSearchAjax = [];
+					var allSearchAjax = [],k=0;
 					$("#wait").show();
 					var usersXML = selectedUsersCollection();
-					for (var k=0; k < userGroups.length; k++) {
+					//for (var k=0; k < userGroups.length; k++) {
+					var inter = setInterval(function () {
 						allSearchAjax.push(addUsersCollectionToGroup(userGroups[k],usersXML));
-					}
-					Promise.all(allSearchAjax).then(function() {
-						$("#userSearch").trigger( "click" );
-					},function(error) {
-						$("#wait").hide();
-					});
+						k+=1;
+						if(k==userGroups.length){
+							$.when.apply($, allSearchAjax).then(function() {
+								$("#userSearch").trigger( "click" );
+							},function(error) {
+								$("#wait").hide();
+							});
+							clearInterval(inter);
+						}
+					},interVal);
 				}
 			});
 		}
@@ -245,10 +282,10 @@ function getGroups(login,userId){
 
 
 function setMessage(message, log){
-	$("#message").fadeIn().append('<p><strong>'+message+'</strong></p>')
-	setTimeout(function() {
+	$("#message").fadeIn().append('<p><small>'+$.datepicker.formatDate( "dd-mm-yy ", new Date() ) + new Date().getHours() +":"+ new Date().getMinutes()+'>> '+message+'</small></p>');
+	/*setTimeout(function() {
   		$("#message").fadeOut().empty();
-	}, 5000);
+	}, 5000);*/
 	if(log == true)
 		$SP().list("Logs").add({Title: message});
 }
@@ -299,6 +336,7 @@ function getAllGroups(groupName){
 
 function rmGroup(groupName){
 	if(confirm("Czy napewno chcesz usunąć grupę:"+ groupName +"?")){
+		$("#wait").show();
 		$SP().webService({ 
 			service:"UserGroup",
 			operation:"RemoveGroup",
@@ -308,10 +346,12 @@ function rmGroup(groupName){
 			}
 		}).then(function(response) {
 		  	setMessage("Usunięto grupę: "+groupName, true);
+		  	$("#wait").hide();
 		}, 
 		function(error) { 
 			setMessage("Error: "+error, true); 
 			console.log(error);
+			$("#wait").hide();
 		});
 	}
 }

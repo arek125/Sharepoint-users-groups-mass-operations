@@ -14,7 +14,7 @@
     padding: 10px;
     max-width: 750px;
 }*/
-  body {
+body {
     padding-top: 70px;
   }
 hr{ 
@@ -36,3 +36,9 @@ header{
 #message{
 	display: none;
 }
+th.headerSortUp { 
+    background-image: url(img/small_asc.gif); 
+} 
+th.headerSortDown { 
+    background-image: url(../img/small_desc.gif); 
+} 
