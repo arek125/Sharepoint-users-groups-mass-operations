@@ -13,6 +13,7 @@
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/sharepointplus-4.0.js"></script>
 		<script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+		<script type="text/javascript" src="js/clipboard.min.js"></script>
 		<script type="text/javascript" src="js/main.js"></script>
 	</head>
   	<body>
@@ -38,6 +39,7 @@
 						<p><button id="userSearch" class="btn btn-block btn-info btn-sm">Szukaj użytkowników</button></p>
 						<p><button id="zamienIN" class="btn btn-block btn-warning btn-sm">Zamień imię/nazwisko</button></p>
 						<hr>
+						<p><button id="copyLogins" class="btn btn-block btn-warning btn-sm">Kopuj loginy zaz. userów</button></p>
 					</div>
 				</div>
 				<div class="col-lg-4 col-md-9">
@@ -45,9 +47,7 @@
 					<table id="content" class="table table-bordered table-hover">
 						<thead>
 							<th><input type="checkbox" id="alltrch1"></input></th>
-							<th>ID</th>
-							<th>NAZWA</th>
-							<th>LOGIN</th>
+							<th>ID/NAZWA/LOGIN/EMAIL</th>
 							<th>GRUPY</th>
 						</thead>
 						<tbody id="tbUsers">
