@@ -21,7 +21,7 @@ $(document).ready(function() {
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
 				$("#content").trigger("update"); 
-				$("#content").find("th:contains(NAZWA)").trigger("sort");
+				//$("#content").find("th:contains(NAME)").trigger("sort");
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
@@ -44,7 +44,7 @@ $(document).ready(function() {
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
 				$("#content2").trigger("update"); 
-				$("#content2").find("th:contains(NAZWA)").trigger("sort");
+				//$("#content2").find("th:contains(NAME)").trigger("sort");
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
@@ -96,14 +96,12 @@ $(document).ready(function() {
         $('input[id^=trch2]').prop('checked', $(this).is(':checked'));
     });
 
-    //Utworzenie listy do logów jeśli nie istnieje
     $("#wait").show();
 	$SP().webService({ 
 		service:"Lists",
 		operation:"GetListCollection",
 		soapURL:"http://schemas.microsoft.com/sharepoint/soap/"
 	}).then(function(response) {
-		//console.log(response);
 		var logListExist = false;
 		$(response).find("List").each(function(){
 			var listName =$(this).attr("Title");
@@ -120,7 +118,7 @@ $(document).ready(function() {
 					templateID: 100
 	  			}
 			}).then(function(response) {
-		  		setMessage("Utwrzono listę logów.", true);
+		  		setMessage("Log list created.", true);
 		  		$("#wait").hide();
 			},function(error) { 
 				setMessage("Error: "+error, false); 
@@ -229,24 +227,23 @@ function getGroups(login,userId){
 		$(response).find("Group").each(function(){
 			var cGroupName = $(this).attr("Name");
 			sgroupsLi += '<li class="list-group-item"><small>'+cGroupName+'</small>'+
-			'<button class="btn btn-danger btn-xs" onclick="rmUserFromGroup(\''+onlyDomain+'\\\\'+onlyLogin+'\',\''+cGroupName+'\');$(this).parent().remove();return false;"><small>x</small></button>'+
-			'<button class="btn btn-success btn-xs" onclick="event.preventDefault();addUsersCollectionToGroup(\''+cGroupName+'\',selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></li>';
+			'<div class="btn-group pull-right"><button data-toggle="tooltip" title="Remove this user from this group" class="btn btn-danger btn-xs" onclick="rmUserFromGroup(\''+onlyDomain+'\\\\'+onlyLogin+'\',\''+cGroupName+'\');$(this).parent().remove();return false;"><small>x</small></button>'+
+			'<button data-toggle="tooltip" title="Add selected users to this group" class="btn btn-success btn-xs" onclick="event.preventDefault();addUsersCollectionToGroup(\''+cGroupName+'\',selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></div></li>';
 			userGroups.push(cGroupName);
 			i++;
 		});
 		if (i>0){
-			sgroupsLi +='<li class="list-group-item"><button class="btn btn-danger btn-xs" id="dlg'+userId+'"><small>Usuń z tych grup</small></button>'+
-			'<button class="btn btn-success btn-xs" id="addg'+userId+'"><small>Dodaj zaz. do tych grup</small></button></li>';
+			sgroupsLi +='<li class="list-group-item"><div class="btn-group"><button class="btn btn-danger btn-xs" id="dlg'+userId+'"><small>Remove from this groups</small></button>'+
+			'<button class="btn btn-success btn-xs" id="addg'+userId+'"><small>Add selected to this groups</small></button></div></li>';
 		}
 		sgroups.html(sgroupsLi);
 		$("#"+userId+" td:last").html(sgroups);
 		if (i>0){
 			$("#dlg"+userId).on('click', function(event) {
 				event.preventDefault();
-				if(confirm("Czy napewno chcesz usunąć usera "+login+" z wszystkich grup ?")){
+				if(confirm("Are you sure you want to delete the user "+ login +" from all groups ?")){
 					var allSearchAjax = [],j=0;
 					$("#wait").show();
-					//for (var j=0; j < userGroups.length; j++) {
 					var inter = setInterval(function () {
 						allSearchAjax.push(rmUserFromGroup(login,userGroups[j]));
 						j+=1;
@@ -264,7 +261,7 @@ function getGroups(login,userId){
 			});
 			$("#addg"+userId).on('click', function(event) {
 				event.preventDefault();
-				if(confirm("Czy napewno chcesz doda zaznaczonuch do wszystkich grup usera "+login+" ?")){
+				if(confirm("Are you sure you want to add selected users to all of this user "+login+" groups ?")){
 					var allSearchAjax = [],k=0;
 					$("#wait").show();
 					var usersXML = selectedUsersCollection();
@@ -310,7 +307,7 @@ function rmUserFromGroup(login,groupName){
 		    userLoginName: login
 	  	}
 	}).then(function(response) {
-	  	setMessage("Usunięto "+login+" z "+groupName, true);
+	  	setMessage(login+" deleted from "+groupName, true);
 	}, 
 	function(error) { 
 		setMessage("Error: "+error, true);
@@ -332,7 +329,8 @@ function getAllGroups(groupName){
 				"<td><a href='/_layouts/editgrp.aspx?Group="+$(this).attr("Name")+"' target='_blank'>" + $(this).attr("ID") + "</a></td>"+
 				"<td><a href='/_layouts/people.aspx?MembershipGroupId="+$(this).attr("ID")+"' target='_blank'>" + $(this).attr("Name") + "</a></td>"+
 				"<td><small>"+$(this).attr("Description")+"</small></td>"+
-				'<td><button class="btn btn-danger btn-xs" onclick="rmGroup(\''+$(this).attr("Name")+'\');$(this).parent().parent().remove();return false;"><small>x</small></button></td>'+
+				'<td><div class="btn-group" style="width:35px"><button data-toggle="tooltip" title="Remove this group" class="btn btn-danger btn-xs" onclick="rmGroup(\''+$(this).attr("Name")+'\');$(this).parent().parent().remove();return false;"><small>x</small></button>'+
+				'<button data-toggle="tooltip" title="Add selected users to this group" class="btn btn-success btn-xs" onclick="addUsersCollectionToGroup(\''+$(this).attr("Name")+'\', selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></div></td>'+
 				"</tr>";
 			}
 		});
@@ -345,7 +343,7 @@ function getAllGroups(groupName){
 }
 
 function rmGroup(groupName){
-	if(confirm("Czy napewno chcesz usunąć grupę:"+ groupName +"?")){
+	if(confirm("Are you sure you want to delete group:"+ groupName +" ?")){
 		$("#wait").show();
 		$SP().webService({ 
 			service:"UserGroup",
@@ -355,7 +353,7 @@ function rmGroup(groupName){
 			    groupName: groupName
 			}
 		}).then(function(response) {
-		  	setMessage("Usunięto grupę: "+groupName, true);
+		  	setMessage(groupName+" group deleted", true);
 		  	$("#wait").hide();
 		}, 
 		function(error) { 
@@ -389,7 +387,7 @@ function addUsersCollectionToGroup(groupName, usersXML){
 			}
 	}).then(function(response) {
 		$(usersXML).find("User").each(function(index2, el2) {
-			setMessage("Usera: "+$(el2).attr('LoginName')+" dodano do grupy: "+groupName, true);
+			setMessage($(el2).attr('LoginName')+" added to group: "+groupName, true);
 		});
 	},function(error) { 
 		setMessage("Error: "+error, true); 
