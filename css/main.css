@@ -16,6 +16,7 @@
 }*/
 body {
     padding-top: 70px;
+    font-size: 12px !important;
   }
 hr{ 
     display: block;
@@ -36,9 +37,18 @@ header{
 #message{
 	display: none;
 }
-th.headerSortUp { 
-    background-image: url(img/small_asc.gif); 
-} 
-th.headerSortDown { 
-    background-image: url(../img/small_desc.gif); 
-} 
+.list-group-item {
+    padding: 5px 7px !important;
+}
+
+.btn-group, .btn-group-vertical {
+    display: -webkit-box !important;
+    display: -moz-box !important;
+    display: -ms-flexbox !important;
+    display: -webkit-flex !important;
+    display: flex !important;
+}
+.small-table{
+        width: 100%;
+    max-width: 100%;
+}

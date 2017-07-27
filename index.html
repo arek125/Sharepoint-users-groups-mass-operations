@@ -6,13 +6,14 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<title>UserGroup</title>
 		<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-		<link href="css/main.css" rel="stylesheet" media="screen">
 		<link href="css/jquery-ui.min.css" rel="stylesheet" media="screen">
+		<link rel="stylesheet" type="text/css" href="css/datatables.min.css"/>
+		<link href="css/main.css" rel="stylesheet" media="screen">
 		<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
 		<script type="text/javascript" src="js/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>
-		<script type="text/javascript" src="js/sharepointplus-4.0.js"></script>
-		<script type="text/javascript" src="js/jquery.tablesorter.min.js"></script>
+		<script type="text/javascript" src="js/sharepointplus-4.0.min.js"></script>
+		<script type="text/javascript" src="js/datatables.min.js"></script>
 		<script type="text/javascript" src="js/clipboard.min.js"></script>
 		<script type="text/javascript" src="js/main.js"></script>
 	</head>
@@ -32,26 +33,24 @@
 		<div class="container-fluid">
 			<div class="row" >
 				<div class="col-lg-2 col-md-3 ">
-					<div data-spy="affix" data-offset-top="50">
-						<div class="panel panel-default">
-							<div class="panel-heading">
-								<h4 class="text-center">Users</h4>
-							</div>
-							<div class="panel-body">
-								<p><textarea placeholder="user login/name per line" class="form-control" rows="12" cols="30" psname="user" id="userNames"></textarea></p>
-								<p><label class="small"><input type="checkbox" id="caleAd" checked>Also search outside this site</label></p>
-								<p><button id="userSearch" class="btn btn-block btn-info btn-sm">Search users</button></p>
-								<p><button id="zamienIN" class="btn btn-block btn-warning btn-sm">Switch names/surnames</button></p>
-								<hr>
-								<p><button id="copyLogins" class="btn btn-block btn-warning btn-sm">Copy selected users logins</button></p>
-							</div>
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h5 class="text-center">Users</h5>
+						</div>
+						<div class="panel-body">
+							<p><textarea placeholder="user login/name per line" class="form-control" rows="12" cols="30" psname="user" id="userNames"></textarea></p>
+							<p><label class="small"><input type="checkbox" id="caleAd" checked>Also search outside this site</label></p>
+							<p><button id="userSearch" class="btn btn-block btn-info btn-sm">Search users</button></p>
+							<p><button id="zamienIN" class="btn btn-block btn-warning btn-sm">Switch names/surnames</button></p>
+							<hr>
+							<p><button id="copyLogins" class="btn btn-block btn-warning btn-sm">Copy selected users logins</button></p>
 						</div>
 					</div>
 				</div>
 				<div class="col-lg-4 col-md-9">
 					<div class="panel panel-default">
 						<div class="panel-heading">
-							<h4 class="text-center">Users - data</h4>
+							<h5 class="text-center">Users - data</h5>
 						</div>
 						<div class="panel-body">
 							<table id="content" class="table table-bordered table-hover">
@@ -67,27 +66,25 @@
 					</div>
 				</div>
 				<div class="col-lg-2 col-md-3">
-					<div data-spy="affix" data-offset-top="50">
-						<div class="panel panel-default">
-							<div class="panel-heading">
-								<h4 class="text-center">Groups</h4>
-							</div>
-							<div class="panel-body">
-								<p><textarea placeholder="group name per line" class="form-control" rows="12" cols="30" psname="group" ></textarea></p>
-								<p><button id="groupSearch" class="btn btn-block btn-info btn-sm">Search groups</button></p>
-								<p><button id="createGroups" class="btn btn-block btn-warning btn-sm">Create groups</button></p>
-								<hr>
-								<p><button id="allGroups" class="btn btn-block btn-info btn-sm" onclick="$('#tbGroups').empty();getAllGroups().then(function(response) {$('#content2').trigger('update');$('#content2').find('th:contains(NAZWA)').trigger('sort');});return false;">All groups</button></p>
-								<hr>
-								<p><button id="addUsersToGroups" class="btn btn-block btn-success btn-sm"><small>Add selected users to selected groups</small></button></p>
-							</div>
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h5 class="text-center">Groups</h5>
+						</div>
+						<div class="panel-body">
+							<p><textarea placeholder="group name per line" class="form-control" rows="12" cols="30" psname="group" ></textarea></p>
+							<p><button id="groupSearch" class="btn btn-block btn-info btn-sm">Search groups</button></p>
+							<p><button id="createGroups" class="btn btn-block btn-warning btn-sm">Create groups</button></p>
+							<hr>
+							<p><button id="allGroups" class="btn btn-block btn-info btn-sm" onclick="$('#tbGroups').empty();$('#content2').DataTable().destroy();getAllGroups().then(function(response) {$('#content2').DataTable();});return false;">All groups</button></p>
+							<hr>
+							<p><button id="addUsersToGroups" class="btn btn-block btn-success btn-sm"><small>Add selected users to selected groups</small></button></p>
 						</div>
 					</div>
 				</div>
 				<div class="col-lg-4 col-md-9">
 					<div class="panel panel-default">
 						<div class="panel-heading">
-							<h4 class="text-center">Groups - data</h4>
+							<h5 class="text-center">Groups - data</h5>
 						</div>
 						<div class="panel-body">
 							<table id="content2" class="table table-bordered table-hover">

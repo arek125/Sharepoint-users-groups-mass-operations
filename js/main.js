@@ -1,12 +1,10 @@
 var interVal = 100;
 $(document).ready(function() {
-	//$("#includedContent").load("/_layouts/usergroup/userGroup.html",main);
-	$("#content2").tablesorter();
-	$("#content").tablesorter();
+	$("#content").DataTable();
 	$("#url").html("<a href='"+window.location.origin+"'>"+window.location.hostname+"</a>");
-
 	$("#userSearch").on('click', function(event) {
 		event.preventDefault();
+		$("#content").DataTable().destroy();
 		$("#tbUsers").empty();
 		var allSearchAjax = [], op = 0;
 		$("#wait").show();
@@ -20,8 +18,7 @@ $(document).ready(function() {
 		});
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
-				$("#content").trigger("update"); 
-				//$("#content").find("th:contains(NAME)").trigger("sort");
+				$("#content").DataTable();
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
@@ -30,6 +27,7 @@ $(document).ready(function() {
 	});
 	$("#groupSearch").on('click', function(event) {
 		event.preventDefault();
+		$("#content2").DataTable().destroy();
 		$("#tbGroups").empty();
 		var allSearchAjax = [], op = 0;
 		$("#wait").show();
@@ -43,8 +41,7 @@ $(document).ready(function() {
 		});
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
-				$("#content2").trigger("update"); 
-				//$("#content2").find("th:contains(NAME)").trigger("sort");
+				$("#content2").DataTable();
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
@@ -136,6 +133,7 @@ $(document).ready(function() {
 	        return selectedUsersLogins();
 	    }
 	});
+	$("#allGroups").trigger("click");
 	///////////////////////////////////////////////////
 });
 
@@ -173,12 +171,12 @@ function usersSearch(line){
 		for (var i=0; i < peopleInGroups.length; i++) {
 			trUser+="<tr id="+peopleInGroups[i].UserInfoID+">"+
 			"<td><input type='checkbox' id='trch1' login='"+peopleInGroups[i].AccountName+"' login2='"+peopleInGroups[i].AccountName2+"' name='"+peopleInGroups[i].DisplayName+"' email='"+peopleInGroups[i].Email+"'></td>"+
-			"<td><ul class='list-group' id='ulp"+peopleInGroups[i].UserInfoID+"'>"+
-			"<li class='list-group-item'><small>"+peopleInGroups[i].UserInfoID+"</small></li>"+
-			"<li class='list-group-item'><small><a href='/_layouts/userdisp.aspx?ID="+peopleInGroups[i].UserInfoID+"' target='_blank'>" + peopleInGroups[i].DisplayName + "</a></small></li>"+
-			"<li class='list-group-item'><small>"+peopleInGroups[i].AccountName+"</small></li>"+
-			"<li class='list-group-item'><small>"+peopleInGroups[i].Email+"</small></li>"+
-			"</ul></td>"+
+			"<td><table class='small-table' id='ulp"+peopleInGroups[i].UserInfoID+"'>"+
+			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleInGroups[i].UserInfoID+"</small></td></tr>"+
+			"<tr style='border-bottom: 1pt solid #ccc;'><td><small><a href='/_layouts/userdisp.aspx?ID="+peopleInGroups[i].UserInfoID+"' target='_blank'>" + peopleInGroups[i].DisplayName + "</a></small></td></tr>"+
+			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleInGroups[i].AccountName+"</small></td></tr>"+
+			"<tr><td><small>"+peopleInGroups[i].Email+"</small></td></tr>"+
+			"</table></td>"+
 			'<td><img id="wait'+peopleInGroups[i].UserInfoID+'" src="img/wait.gif" alt="loading..." class="pull-right img-responsive"></td>'+
 			"</tr>";
 	  	}
@@ -189,12 +187,12 @@ function usersSearch(line){
 			for (var i=0; i < peopleNotInGroups.length; i++) {
 			trUser+="<tr id="+peopleNotInGroups[i].UserInfoID+">"+
 			"<td><input type='checkbox' id='trch1' login='"+peopleNotInGroups[i].AccountName+"' login2='"+peopleNotInGroups[i].AccountName2+"' name='"+peopleNotInGroups[i].DisplayName+"' email='"+peopleNotInGroups[i].Email+"'></td>"+
-			"<td><ul class='list-group' id='ulp"+peopleNotInGroups[i].UserInfoID+"'>"+
-			"<li class='list-group-item'><small>"+peopleNotInGroups[i].UserInfoID+"</small></li>"+
-			"<li class='list-group-item'><small>"+peopleNotInGroups[i].DisplayName+"</small></li>"+
-			"<li class='list-group-item'><small>"+peopleNotInGroups[i].AccountName+"</small></li>"+
-			"<li class='list-group-item'><small>"+peopleNotInGroups[i].Email+"</small></li>"+
-			"</ul></td>"+
+			"<td><table class='small-table' id='ulp"+peopleNotInGroups[i].UserInfoID+"'>"+
+			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].UserInfoID+"</small></td></tr>"+
+			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].DisplayName+"</small></td></tr>"+
+			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].AccountName+"</small></td></tr>"+
+			"<tr><td><small>"+peopleNotInGroups[i].Email+"</small></td></tr>"+
+			"</table></td>"+
 			"<td></td>"+
 			"</tr>";
 			}
@@ -218,7 +216,7 @@ function getGroups(login,userId){
 			userLoginName: login
 		}
 	}).then(function(response) {
-		var sgroups = $('<ul class="list-group" id="g'+userId+'">');
+		var sgroups = $('<table class="small-table" id="g'+userId+'">');
 		var sgroupsLi = ''; var userGroups=[];
 		var i = 0;
 		var splitedLogin = login.split("\\");
@@ -226,60 +224,61 @@ function getGroups(login,userId){
 		var onlyLogin = splitedLogin[1];
 		$(response).find("Group").each(function(){
 			var cGroupName = $(this).attr("Name");
-			sgroupsLi += '<li class="list-group-item"><small>'+cGroupName+'</small>'+
-			'<div class="btn-group pull-right"><button data-toggle="tooltip" title="Remove this user from this group" class="btn btn-danger btn-xs" onclick="rmUserFromGroup(\''+onlyDomain+'\\\\'+onlyLogin+'\',\''+cGroupName+'\');$(this).parent().remove();return false;"><small>x</small></button>'+
-			'<button data-toggle="tooltip" title="Add selected users to this group" class="btn btn-success btn-xs" onclick="event.preventDefault();addUsersCollectionToGroup(\''+cGroupName+'\',selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></div></li>';
+			sgroupsLi += '<tr style="border-bottom: 1pt solid #ccc;"><td><small>'+cGroupName+'</small></td>'+
+			'<td><div class="btn-group pull-right"><button data-toggle="tooltip" title="Remove this user from this group" class="btn btn-danger btn-xs" onclick="rmUserFromGroup(\''+onlyDomain+'\\\\'+onlyLogin+'\',\''+cGroupName+'\');$(this).parent().remove();return false;"><small>x</small></button>'+
+			'<button data-toggle="tooltip" title="Add selected users to this group" class="btn btn-success btn-xs" onclick="event.preventDefault();addUsersCollectionToGroup(\''+cGroupName+'\',selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></div></td></tr>';
 			userGroups.push(cGroupName);
 			i++;
 		});
 		if (i>0){
-			sgroupsLi +='<li class="list-group-item"><div class="btn-group"><button class="btn btn-danger btn-xs" id="dlg'+userId+'"><small>Remove from this groups</small></button>'+
-			'<button class="btn btn-success btn-xs" id="addg'+userId+'"><small>Add selected to this groups</small></button></div></li>';
-		}
-		sgroups.html(sgroupsLi);
-		$("#"+userId+" td:last").html(sgroups);
-		if (i>0){
-			$("#dlg"+userId).on('click', function(event) {
-				event.preventDefault();
-				if(confirm("Are you sure you want to delete the user "+ login +" from all groups ?")){
-					var allSearchAjax = [],j=0;
-					$("#wait").show();
-					var inter = setInterval(function () {
-						allSearchAjax.push(rmUserFromGroup(login,userGroups[j]));
-						j+=1;
-						if(j==userGroups.length){
-							$.when.apply($, allSearchAjax).then(function() {
-								$("#wait").hide();
-								$("#g"+userId).remove();
-							},function(error) {
-								$("#wait").hide();
-							});
-							clearInterval(inter);
-						}
-					},interVal);
-				}
-			});
-			$("#addg"+userId).on('click', function(event) {
-				event.preventDefault();
-				if(confirm("Are you sure you want to add selected users to all of this user "+login+" groups ?")){
-					var allSearchAjax = [],k=0;
-					$("#wait").show();
-					var usersXML = selectedUsersCollection();
-					//for (var k=0; k < userGroups.length; k++) {
-					var inter = setInterval(function () {
-						allSearchAjax.push(addUsersCollectionToGroup(userGroups[k],usersXML));
-						k+=1;
-						if(k==userGroups.length){
-							$.when.apply($, allSearchAjax).then(function() {
-								$("#userSearch").trigger( "click" );
-							},function(error) {
-								$("#wait").hide();
-							});
-							clearInterval(inter);
-						}
-					},interVal*3);
-				}
-			});
+			sgroupsLi +='<tr><td colspan="2"><div class="btn-group pull-right"><button data-toggle="tooltip" title="Remove from this all groups" class="btn btn-danger btn-xs" id="dlg'+userId+'"><small>xxx</small></button>'+
+			'<button data-toggle="tooltip" title="Add selected to this groups" class="btn btn-success btn-xs" id="addg'+userId+'"><small>>>></small></button></div></td></tr></table>';
+		
+			sgroups.html(sgroupsLi);
+			$("#"+userId+" td:last").html(sgroups);
+			if (i>0){
+				$("#dlg"+userId).on('click', function(event) {
+					event.preventDefault();
+					if(confirm("Are you sure you want to delete the user "+ login +" from all groups ?")){
+						var allSearchAjax = [],j=0;
+						$("#wait").show();
+						var inter = setInterval(function () {
+							allSearchAjax.push(rmUserFromGroup(login,userGroups[j]));
+							j+=1;
+							if(j==userGroups.length){
+								$.when.apply($, allSearchAjax).then(function() {
+									$("#wait").hide();
+									$("#g"+userId).remove();
+								},function(error) {
+									$("#wait").hide();
+								});
+								clearInterval(inter);
+							}
+						},interVal);
+					}
+				});
+				$("#addg"+userId).on('click', function(event) {
+					event.preventDefault();
+					if(confirm("Are you sure you want to add selected users to all of this user "+login+" groups ?")){
+						var allSearchAjax = [],k=0;
+						$("#wait").show();
+						var usersXML = selectedUsersCollection();
+						//for (var k=0; k < userGroups.length; k++) {
+						var inter = setInterval(function () {
+							allSearchAjax.push(addUsersCollectionToGroup(userGroups[k],usersXML));
+							k+=1;
+							if(k==userGroups.length){
+								$.when.apply($, allSearchAjax).then(function() {
+									$("#userSearch").trigger( "click" );
+								},function(error) {
+									$("#wait").hide();
+								});
+								clearInterval(inter);
+							}
+						},interVal*3);
+					}
+				});
+			}
 		}
 	},function(error) { 
 		setMessage("Error: "+error, true); 
@@ -406,3 +405,4 @@ function selectedUsersLogins(){
 	});
 	return loginsString;
 }
+
