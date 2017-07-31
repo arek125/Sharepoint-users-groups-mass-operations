@@ -25,17 +25,6 @@ var gtSett={
 $(document).ready(function() {
 	$("#content").DataTable(utSett);
 	$("#url").html("<a href='"+window.location.origin+"'>"+window.location.hostname+"</a>");
-	// $SP().webService({ 
-	// 	service:"UserGroup",
-	// 	operation:"GetCurrentUserInfo",
-	// 	soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
-	// }).then(function(response) {
-	// 	var cUser = $(response).find("User");
-	// 	groupCreationSetting.defaultUserLoginName = $(cUser).attr("LoginName");
-	// },function(error) { 
-	// 	setMessage("Error: "+error, saveLogs); 
-	// 	console.log(error);
-	// });
 	$("#userSearch").on('click', function(event) {
 		event.preventDefault();
 		$("#content").DataTable().destroy();
