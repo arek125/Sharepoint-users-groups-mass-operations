@@ -1,7 +1,41 @@
-var interVal = 100;
+var interVal = 100;//ms
+var saveLogs = true;
+var groupCreationSetting={
+	ownerIdentifier: 'Site Owners', //Group name or DOMAIN\\login
+	ownerType: "group", //user or group
+	defaultUserLoginName: "DOMAIN\\login", //DOMAIN\\login
+	discritpion: "", //optional
+	roles: ["Contribute","Read"] //roles names
+}
+var utSett={
+	"order": [],
+	"columnDefs": [ {
+		"targets": 'no-sort',
+		"orderable": false,
+	} ]
+};
+var gtSett={
+	"order": [],
+	"pageLength": 25,
+	"columnDefs": [ {
+		"targets": 'no-sort',
+		"orderable": false,
+	} ]
+};
 $(document).ready(function() {
-	$("#content").DataTable();
+	$("#content").DataTable(utSett);
 	$("#url").html("<a href='"+window.location.origin+"'>"+window.location.hostname+"</a>");
+	// $SP().webService({ 
+	// 	service:"UserGroup",
+	// 	operation:"GetCurrentUserInfo",
+	// 	soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
+	// }).then(function(response) {
+	// 	var cUser = $(response).find("User");
+	// 	groupCreationSetting.defaultUserLoginName = $(cUser).attr("LoginName");
+	// },function(error) { 
+	// 	setMessage("Error: "+error, saveLogs); 
+	// 	console.log(error);
+	// });
 	$("#userSearch").on('click', function(event) {
 		event.preventDefault();
 		$("#content").DataTable().destroy();
@@ -18,7 +52,12 @@ $(document).ready(function() {
 		});
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
-				$("#content").DataTable();
+				$("#content").DataTable(utSett);
+				$('input[id="trch1"]').change(function() {
+					var tr = $(this).parent().parent();
+					if($(this).prop('checked'))tr.css('background-color', '#eee');
+					else tr.css('background-color', '#fff');
+				}); 
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
@@ -31,22 +70,72 @@ $(document).ready(function() {
 		$("#tbGroups").empty();
 		var allSearchAjax = [], op = 0;
 		$("#wait").show();
+		if(!$('textarea[psname$=group]').val())allSearchAjax.push(getAllGroups());
 		$.each($('textarea[psname$=group]').val().split(/\n/), function (i, line) {
 			if (line){
 				setTimeout(function(){
-					allSearchAjax.push(getAllGroups(line));
+					allSearchAjax.push(searchGroups(line));
 				}, op);
 				op+=interVal;
 			}
 		});
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
-				$("#content2").DataTable();
+				$("#content2").DataTable(gtSett);
+				$('input[id="trch2"]').change(function() {
+					var tr = $(this).parent().parent();
+					if($(this).prop('checked'))tr.css('background-color', '#eee');
+					else tr.css('background-color', '#fff');
+				}); 
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
 			});
 		}, op);
+	});
+
+	$("#createGroups").on('click', function(event) {
+		event.preventDefault();
+		if(confirm("Create new groups ?: \n"+ $('textarea[psname$=group]').val())){
+			var allSearchAjax = [], op = 0;
+			$("#wait").show();
+			$.each($('textarea[psname$=group]').val().split(/\n/), function (i, line) {
+				if (line){
+					setTimeout(function(){
+						allSearchAjax.push(createGroup(line));
+					}, op);
+					op+=interVal;
+				}
+			});
+			setTimeout(function(){
+				$.when.apply($, allSearchAjax).then(function() {
+					$("#groupSearch").trigger("click");
+				},function(error) {
+					$("#wait").hide();
+				});
+			}, op);
+		}
+	});
+
+	$("#removeGroups").on('click', function(event) {
+		event.preventDefault();
+		if(confirm("Remove selected groups ?")){
+			var allSearchAjax = [], op = 0;
+			$("#wait").show();
+			$('input[id^=trch2]:checked').each(function(index, el) {
+				setTimeout(function(){
+					allSearchAjax.push(rmGroup($(el).attr("groupname"),true));
+				}, op);
+				op+=interVal;
+			});
+			setTimeout(function(){
+				$.when.apply($, allSearchAjax).then(function() {
+					$("#groupSearch").trigger("click");
+				},function(error) {
+					$("#wait").hide();
+				});
+			}, op);
+		}
 	});
 
 	$("#zamienIN").on('click', function(event) {
@@ -87,53 +176,56 @@ $(document).ready(function() {
 	});
 
     $("#alltrch1").on('click', function(){
-        $('input[id^=trch1]').prop('checked', $(this).is(':checked'));
+		$('input[id^=trch1]').prop('checked', $(this).is(':checked'));
+		$('input[id^=trch1]').trigger('change');
     });
     $("#alltrch2").on('click', function(){
-        $('input[id^=trch2]').prop('checked', $(this).is(':checked'));
-    });
-
-    $("#wait").show();
-	$SP().webService({ 
-		service:"Lists",
-		operation:"GetListCollection",
-		soapURL:"http://schemas.microsoft.com/sharepoint/soap/"
-	}).then(function(response) {
-		var logListExist = false;
-		$(response).find("List").each(function(){
-			var listName =$(this).attr("Title");
-			if (listName == "Logs")logListExist = true;
-		});
-	  	if(!logListExist)
-	  		$SP().webService({ 
-				service:"Lists",
-				operation:"AddList",
-				soapURL:"http://schemas.microsoft.com/sharepoint/soap/",
-				properties:{
-	    			listName: "Logs",
-					description: "List for operations loging.",
-					templateID: 100
-	  			}
-			}).then(function(response) {
-		  		setMessage("Log list created.", true);
-		  		$("#wait").hide();
-			},function(error) { 
-				setMessage("Error: "+error, false); 
-				$("#wait").hide();
-				console.log(error);
-			});
-	  	else $("#wait").hide();
-	},function(error) { 
-		setMessage("Error: "+error, false); 
-		$("#wait").hide();
-		console.log(error);
+		$('input[id^=trch2]').prop('checked', $(this).is(':checked'));
+		$('input[id^=trch2]').trigger('change');
 	});
+
+	$("#wait").show();
+	if(saveLogs)
+		$SP().webService({ 
+			service:"Lists",
+			operation:"GetListCollection",
+			soapURL:"http://schemas.microsoft.com/sharepoint/soap/"
+		}).then(function(response) {
+			var logListExist = false;
+			$(response).find("List").each(function(){
+				var listName =$(this).attr("Title");
+				if (listName == "SUGMO Logs")logListExist = true;
+			});
+			if(!logListExist)
+				$SP().webService({ 
+					service:"Lists",
+					operation:"AddList",
+					soapURL:"http://schemas.microsoft.com/sharepoint/soap/",
+					properties:{
+						listName: "SUGMO Logs",
+						description: "List for SUGMO operations loging.",
+						templateID: 100
+					}
+				}).then(function(response) {
+					setMessage("Log list created.", saveLogs);
+					$("#wait").hide();
+				},function(error) { 
+					setMessage("Error: "+error, false); 
+					$("#wait").hide();
+					console.log(error);
+				});
+			else $("#wait").hide();
+		},function(error) { 
+			setMessage("Error: "+error, false); 
+			$("#wait").hide();
+			console.log(error);
+		});
 	new Clipboard('#copyLogins', {
 	    text: function(trigger) {
 	        return selectedUsersLogins();
 	    }
 	});
-	$("#allGroups").trigger("click");
+	$("#groupSearch").trigger("click");
 	///////////////////////////////////////////////////
 });
 
@@ -163,7 +255,7 @@ function usersSearch(line){
 	  			AccountName2: onlyDomain+'\\\\'+onlyLogin
 	  		})
 	  	});
-		if (people.length == 0)setMessage("Nie znaleziono: "+line, false);
+		if (people.length == 0)setMessage("Nie znaleziono: "+line, saveLogs);
 		var peopleInGroups = $.grep(people,function(el,i){
 			return ( el.UserInfoID != -1);
 		});
@@ -202,7 +294,7 @@ function usersSearch(line){
 			getGroups(peopleInGroups[i].AccountName, peopleInGroups[i].UserInfoID);
 		}
 	},function(error) { 
-		setMessage("Error: "+error, true);
+		setMessage("Error: "+error, saveLogs);
 		console.log(error);
 	}); 
 }
@@ -281,7 +373,7 @@ function getGroups(login,userId){
 			}
 		}
 	},function(error) { 
-		setMessage("Error: "+error, true); 
+		setMessage("Error: "+error, saveLogs); 
 		console.log(error);
 	});
 }
@@ -293,7 +385,7 @@ function setMessage(message, log){
   		$("#message").fadeOut().empty();
 	}, 5000);*/
 	if(log == true)
-		$SP().list("Logs").add({Title: message});
+		$SP().list("SUGMO Logs").add({Title: message});
 }
 
 function rmUserFromGroup(login,groupName){
@@ -306,15 +398,15 @@ function rmUserFromGroup(login,groupName){
 		    userLoginName: login
 	  	}
 	}).then(function(response) {
-	  	setMessage(login+" deleted from "+groupName, true);
+	  	setMessage(login+" deleted from "+groupName, saveLogs);
 	}, 
 	function(error) { 
-		setMessage("Error: "+error, true);
+		setMessage("Error: "+error, saveLogs);
 		console.log(error);
 	});
 }
 
-function getAllGroups(groupName){
+function getAllGroups(){
 	return $SP().webService({ 
 	service:"UserGroup",
 	operation:"GetGroupCollectionFromSite",
@@ -322,29 +414,53 @@ function getAllGroups(groupName){
 	}).then(function(response) {
 		var trGroup = '';
 		$(response).find("Group").each(function(){
-			if(typeof groupName == 'undefined'|| $(this).attr("Name").search(groupName) > -1){
-				trGroup +="<tr id="+$(this).attr("ID")+">"+
-				"<td><input type='checkbox' id='trch2' groupName='"+$(this).attr("Name")+"'></td>"+
-				"<td><a href='/_layouts/editgrp.aspx?Group="+$(this).attr("Name")+"' target='_blank'>" + $(this).attr("ID") + "</a></td>"+
-				"<td><a href='/_layouts/people.aspx?MembershipGroupId="+$(this).attr("ID")+"' target='_blank'>" + $(this).attr("Name") + "</a></td>"+
-				"<td><small>"+$(this).attr("Description")+"</small></td>"+
-				'<td><div class="btn-group" style="width:35px"><button data-toggle="tooltip" title="Remove this group" class="btn btn-danger btn-xs" onclick="rmGroup(\''+$(this).attr("Name")+'\');$(this).parent().parent().remove();return false;"><small>x</small></button>'+
-				'<button data-toggle="tooltip" title="Add selected users to this group" class="btn btn-success btn-xs" onclick="addUsersCollectionToGroup(\''+$(this).attr("Name")+'\', selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></div></td>'+
-				"</tr>";
-			}
+			trGroup +="<tr id="+$(this).attr("ID")+">"+
+			"<td><input type='checkbox' id='trch2' groupName='"+$(this).attr("Name")+"'></td>"+
+			"<td><a href='/_layouts/editgrp.aspx?Group="+$(this).attr("Name")+"' target='_blank'>" + $(this).attr("ID") + "</a></td>"+
+			"<td><a href='/_layouts/people.aspx?MembershipGroupId="+$(this).attr("ID")+"' target='_blank'>" + $(this).attr("Name") + "</a></td>"+
+			"<td><small>"+$(this).attr("Description")+"</small></td>"+
+			'<td><div class="btn-group" style="width:35px"><button data-toggle="tooltip" title="Remove this group" class="btn btn-danger btn-xs" onclick="rmGroup(\''+$(this).attr("Name")+'\');return false;"><small>x</small></button>'+
+			'<button data-toggle="tooltip" title="Add selected users to this group" class="btn btn-success btn-xs" onclick="addUsersCollectionToGroup(\''+$(this).attr("Name")+'\', selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></div></td>'+
+			"</tr>";
 		});
 		$("#tbGroups").append(trGroup);
 	}, 
 	function(error) { 
-		setMessage("Error: "+error, true); 
+		setMessage("Error: "+error, saveLogs); 
 		console.log(error);
 	});
 }
 
-function rmGroup(groupName){
-	if(confirm("Are you sure you want to delete group:"+ groupName +" ?")){
+function searchGroups(groupName){
+	return $SP().webService({ 
+		service:"People",
+	  	operation:"SearchPrincipals",
+	  	soapURL:"http://schemas.microsoft.com/sharepoint/soap/",
+	  	properties:{
+    		searchText: groupName,
+			maxResults: 200,
+			principalType: "SharePointGroup"
+  		}
+	}).then(function(response){
+		var trGroup = '';
+		$(response).find("PrincipalInfo").each(function(index, el){
+			trGroup +="<tr id="+$(el).find("UserInfoID").text()+">"+
+			"<td><input type='checkbox' id='trch2' groupName='"+$(el).find("AccountName").text()+"'></td>"+
+			"<td><a href='/_layouts/editgrp.aspx?Group="+$(el).find("AccountName").text()+"' target='_blank'>" + $(el).find("UserInfoID").text() + "</a></td>"+
+			"<td><a href='/_layouts/people.aspx?MembershipGroupId="+$(el).find("UserInfoID").text()+"' target='_blank'>" + $(el).find("AccountName").text() + "</a></td>"+
+			"<td><small></small></td>"+
+			'<td><div class="btn-group" style="width:35px"><button data-toggle="tooltip" title="Remove this group" class="btn btn-danger btn-xs" onclick="rmGroup(\''+$(el).find("AccountName").text()+'\');return false;"><small>x</small></button>'+
+			'<button data-toggle="tooltip" title="Add selected users to this group" class="btn btn-success btn-xs" onclick="addUsersCollectionToGroup(\''+$(el).find("AccountName").text()+'\', selectedUsersCollection()).then(function(response) {$(\'#userSearch\').trigger(\'click\');});return false;"><small>></small></button></div></td>'+
+			"</tr>";
+		});
+		$("#tbGroups").append(trGroup);
+	});
+}
+
+function rmGroup(groupName, notConfirm){
+	function removeGroup(){
 		$("#wait").show();
-		$SP().webService({ 
+		return $SP().webService({ 
 			service:"UserGroup",
 			operation:"RemoveGroup",
 			soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
@@ -352,15 +468,19 @@ function rmGroup(groupName){
 			    groupName: groupName
 			}
 		}).then(function(response) {
-		  	setMessage(groupName+" group deleted", true);
+		  	setMessage(groupName+" group deleted", saveLogs);
 		  	$("#wait").hide();
 		}, 
 		function(error) { 
-			setMessage("Error: "+error, true); 
+			setMessage("Error: "+error, saveLogs); 
 			console.log(error);
 			$("#wait").hide();
 		});
 	}
+	if (notConfirm)return removeGroup();
+	else if(confirm("Are you sure you want to delete group: "+ groupName +" ?"))removeGroup().then(function(res){
+		$("#groupSearch").trigger("click");
+	});
 }
 
 function selectedUsersCollection(){
@@ -386,10 +506,10 @@ function addUsersCollectionToGroup(groupName, usersXML){
 			}
 	}).then(function(response) {
 		$(usersXML).find("User").each(function(index2, el2) {
-			setMessage($(el2).attr('LoginName')+" added to group: "+groupName, true);
+			setMessage($(el2).attr('LoginName')+" added to group: "+groupName, saveLogs);
 		});
 	},function(error) { 
-		setMessage("Error: "+error, true); 
+		setMessage("Error: "+error, saveLogs); 
 		console.log(error);
 	});
 }
@@ -404,5 +524,41 @@ function selectedUsersLogins(){
 			loginsString+=$(el).attr("login")+';';
 	});
 	return loginsString;
+}
+
+function createGroup(groupName){
+	return $SP().webService({ 
+		service:"UserGroup",
+		operation:"AddGroup",
+		soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
+		properties:{
+			groupName: groupName,
+            ownerIdentifier: groupCreationSetting.ownerIdentifier,
+            ownerType: groupCreationSetting.ownerType,
+            defaultUserLoginName: groupCreationSetting.defaultUserLoginName,
+            discrytpion: groupCreationSetting.discritpion
+		}
+	}).then(function(response) {
+		rmUserFromGroup(groupCreationSetting.defaultUserLoginName, groupName);
+		for(var role in groupCreationSetting.roles)
+			$SP().webService({ 
+				service:"UserGroup",
+				operation:"AddGroupToRole",
+				soapURL:"http://schemas.microsoft.com/sharepoint/soap/directory/",
+				properties:{
+					groupName: groupName,
+					roleName: groupCreationSetting.roles[role]
+				}
+			}).then(function(response) {
+				//...
+			},function(error) { 
+				setMessage("Error: "+error, saveLogs); 
+				console.log(error);
+			});
+		setMessage("Group "+groupName+" created", saveLogs); 
+	},function(error) { 
+		setMessage("Error: "+error, saveLogs); 
+		console.log(error);
+	});
 }
 

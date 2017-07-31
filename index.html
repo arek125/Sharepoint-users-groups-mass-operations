@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>UserGroup</title>
+		<title>SUGMO</title>
 		<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
 		<link href="css/jquery-ui.min.css" rel="stylesheet" media="screen">
 		<link rel="stylesheet" type="text/css" href="css/datatables.min.css"/>
@@ -22,10 +22,16 @@
 			<div class="container-fluid">
 				<div class="row">
 					<div class="col-xs-11 col-sm-11 col-md-11 col-lg-11">
-						<h3><span id="url" class="text-uppercase">URL</span></h3>
+						<h3>SUGMO: <span id="url" class="text-uppercase">URL</span></h3>
 					</div>
 					<div class="col-xs-1 col-sm-1 col-md-1 col-lg-1">
-						<img id="wait" src="img/wait.gif" alt="loading..." class="pull-right img-responsive">
+						<div class="spinner pull-right" id="wait">
+							<div class="rect1"></div>
+							<div class="rect2"></div>
+							<div class="rect3"></div>
+							<div class="rect4"></div>
+							<div class="rect5"></div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -55,7 +61,7 @@
 						<div class="panel-body">
 							<table id="content" class="table table-bordered table-hover">
 								<thead>
-									<th><input type="checkbox" id="alltrch1"></input></th>
+									<th class="no-sort"><input type="checkbox" id="alltrch1"></input></th>
 									<th>ID/NAME/LOGIN/EMAIL</th>
 									<th>GROUPS</th>
 								</thead>
@@ -73,11 +79,11 @@
 						<div class="panel-body">
 							<p><textarea placeholder="group name per line" class="form-control" rows="12" cols="30" psname="group" ></textarea></p>
 							<p><button id="groupSearch" class="btn btn-block btn-info btn-sm">Search groups</button></p>
-							<p><button id="createGroups" class="btn btn-block btn-warning btn-sm">Create groups</button></p>
-							<hr>
-							<p><button id="allGroups" class="btn btn-block btn-info btn-sm" onclick="$('#tbGroups').empty();$('#content2').DataTable().destroy();getAllGroups().then(function(response) {$('#content2').DataTable();});return false;">All groups</button></p>
+							<p><button id="createGroups" class="btn btn-block btn-success btn-sm">Create groups</button></p>
 							<hr>
 							<p><button id="addUsersToGroups" class="btn btn-block btn-success btn-sm"><small>Add selected users to selected groups</small></button></p>
+							<hr>
+							<p><button id="removeGroups" class="btn btn-block btn-danger btn-sm">Remove selected groups</button></p>
 						</div>
 					</div>
 				</div>
@@ -89,11 +95,11 @@
 						<div class="panel-body">
 							<table id="content2" class="table table-bordered table-hover">
 								<thead>
-									<th><input type="checkbox" id="alltrch2"></input></th>
+									<th class="no-sort"><input type="checkbox" id="alltrch2"></input></th>
 									<th>ID</th>
 									<th>NAME</th>
 									<th>DISC</th>
-									<th>OPS</th>
+									<th class="no-sort">OPS</th>
 								</thead>
 								<tbody id="tbGroups">
 								</tbody>
