@@ -104,3 +104,6 @@ header{
         -webkit-transform: scaleY(1.0);
     }
 }
+#alltrch1, #alltrch2{
+    width: 100%;
+}

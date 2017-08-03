@@ -7,23 +7,35 @@ var groupCreationSetting={
 	discritpion: "", //optional
 	roles: ["Contribute","Read"] //roles names
 }
+var ut;
 var utSett={
-	"order": [],
-	"columnDefs": [ {
-		"targets": 'no-sort',
-		"orderable": false,
-	} ]
+	order: [],
+	columnDefs: [ {
+		orderable: false,
+		className: 'select-checkbox',
+		targets:   0
+	} ],
+	select: {
+		style: 'multi',
+		selector: 'td:first-child'
+	}
 };
+var gt;
 var gtSett={
-	"order": [],
-	"pageLength": 25,
-	"columnDefs": [ {
-		"targets": 'no-sort',
-		"orderable": false,
-	} ]
+	order: [],
+	pageLength: 25,
+	columnDefs: [ {
+		orderable: false,
+		className: 'select-checkbox',
+		targets:   0
+	} ],
+	select: {
+		style: 'multi',
+		selector: 'td:first-child'
+	}
 };
 $(document).ready(function() {
-	$("#content").DataTable(utSett);
+	ut = $("#content").DataTable(utSett);
 	$("#url").html("<a href='"+window.location.origin+"'>"+window.location.hostname+"</a>");
 	$("#userSearch").on('click', function(event) {
 		event.preventDefault();
@@ -41,12 +53,7 @@ $(document).ready(function() {
 		});
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
-				$("#content").DataTable(utSett);
-				$('input[id="trch1"]').change(function() {
-					var tr = $(this).parent().parent();
-					if($(this).prop('checked'))tr.css('background-color', '#eee');
-					else tr.css('background-color', '#fff');
-				}); 
+				ut = $("#content").DataTable(utSett);
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
@@ -70,12 +77,7 @@ $(document).ready(function() {
 		});
 		setTimeout(function(){
 			$.when.apply($, allSearchAjax).then(function() {
-				$("#content2").DataTable(gtSett);
-				$('input[id="trch2"]').change(function() {
-					var tr = $(this).parent().parent();
-					if($(this).prop('checked'))tr.css('background-color', '#eee');
-					else tr.css('background-color', '#fff');
-				}); 
+				gt = $("#content2").DataTable(gtSett);
 				$("#wait").hide();
 			},function(error) {
 				$("#wait").hide();
@@ -111,9 +113,16 @@ $(document).ready(function() {
 		if(confirm("Remove selected groups ?")){
 			var allSearchAjax = [], op = 0;
 			$("#wait").show();
-			$('input[id^=trch2]:checked').each(function(index, el) {
+			// $('input[id^=trch2]:checked').each(function(index, el) {
+			// 	setTimeout(function(){
+			// 		allSearchAjax.push(rmGroup($(el).attr("groupname"),true));
+			// 	}, op);
+			// 	op+=interVal;
+			// });
+			gt.rows({ selected: true }).every(function ( rowIdx, tableLoop, rowLoop ) {
+				var data = this.data();
 				setTimeout(function(){
-					allSearchAjax.push(rmGroup($(el).attr("groupname"),true));
+					allSearchAjax.push(rmGroup($(data[2]).text(),true));
 				}, op);
 				op+=interVal;
 			});
@@ -149,9 +158,16 @@ $(document).ready(function() {
 		var usersXML = selectedUsersCollection();
 		var allSearchAjax = [], op=0;
 		$("#wait").show();
-		$('input[id^=trch2]:checked').each(function(index, el) {
+		// $('input[id^=trch2]:checked').each(function(index, el) {
+		// 	setTimeout(function(){
+		// 		allSearchAjax.push(addUsersCollectionToGroup($(el).attr('groupName'),usersXML));
+		// 	}, op);
+		// 	op+=interVal*3;
+		// });
+		gt.rows({ selected: true }).every(function ( rowIdx, tableLoop, rowLoop ) {
+			var data = this.data();
 			setTimeout(function(){
-				allSearchAjax.push(addUsersCollectionToGroup($(el).attr('groupName'),usersXML));
+				allSearchAjax.push(addUsersCollectionToGroup($(data[2]).text(),usersXML));
 			}, op);
 			op+=interVal*3;
 		});
@@ -165,12 +181,12 @@ $(document).ready(function() {
 	});
 
     $("#alltrch1").on('click', function(){
-		$('input[id^=trch1]').prop('checked', $(this).is(':checked'));
-		$('input[id^=trch1]').trigger('change');
+		if ($(this).is(':checked'))ut.rows().select();
+		else ut.rows().deselect();
     });
     $("#alltrch2").on('click', function(){
-		$('input[id^=trch2]').prop('checked', $(this).is(':checked'));
-		$('input[id^=trch2]').trigger('change');
+		if ($(this).is(':checked'))gt.rows().select();
+		else gt.rows().deselect();
 	});
 
 	$("#wait").show();
@@ -251,14 +267,15 @@ function usersSearch(line){
 		var trUser = "";
 		for (var i=0; i < peopleInGroups.length; i++) {
 			trUser+="<tr id="+peopleInGroups[i].UserInfoID+">"+
-			"<td><input type='checkbox' id='trch1' login='"+peopleInGroups[i].AccountName+"' login2='"+peopleInGroups[i].AccountName2+"' name='"+peopleInGroups[i].DisplayName+"' email='"+peopleInGroups[i].Email+"'></td>"+
+			//"<td><input type='checkbox' id='trch1' login='"+peopleInGroups[i].AccountName+"' login2='"+peopleInGroups[i].AccountName2+"' name='"+peopleInGroups[i].DisplayName+"' email='"+peopleInGroups[i].Email+"'></td>"+
+			"<td></td>"+
 			"<td><table class='small-table' id='ulp"+peopleInGroups[i].UserInfoID+"'>"+
-			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleInGroups[i].UserInfoID+"</small></td></tr>"+
-			"<tr style='border-bottom: 1pt solid #ccc;'><td><small><a href='/_layouts/userdisp.aspx?ID="+peopleInGroups[i].UserInfoID+"' target='_blank'>" + peopleInGroups[i].DisplayName + "</a></small></td></tr>"+
-			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleInGroups[i].AccountName+"</small></td></tr>"+
-			"<tr><td><small>"+peopleInGroups[i].Email+"</small></td></tr>"+
+			"<tr id='uId' style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleInGroups[i].UserInfoID+"</small></td></tr>"+
+			"<tr id='name' style='border-bottom: 1pt solid #ccc;'><td><small><a href='/_layouts/userdisp.aspx?ID="+peopleInGroups[i].UserInfoID+"' target='_blank'>" + peopleInGroups[i].DisplayName + "</a></small></td></tr>"+
+			"<tr id='login' style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleInGroups[i].AccountName+"</small></td></tr>"+
+			"<tr id='email'><td><small>"+peopleInGroups[i].Email+"</small></td></tr>"+
 			"</table></td>"+
-			'<td><img id="wait'+peopleInGroups[i].UserInfoID+'" src="img/wait.gif" alt="loading..." class="pull-right img-responsive"></td>'+
+			'<td><div class="spinner pull-right" id="wait"><div class="rect1"></div><div class="rect2"></div><div class="rect3"></div><div class="rect4"></div><div class="rect5"></div></div></td>'+
 			"</tr>";
 	  	}
 	  	if($("#caleAd").is(":checked")){
@@ -267,12 +284,13 @@ function usersSearch(line){
 			});
 			for (var i=0; i < peopleNotInGroups.length; i++) {
 			trUser+="<tr id="+peopleNotInGroups[i].UserInfoID+">"+
-			"<td><input type='checkbox' id='trch1' login='"+peopleNotInGroups[i].AccountName+"' login2='"+peopleNotInGroups[i].AccountName2+"' name='"+peopleNotInGroups[i].DisplayName+"' email='"+peopleNotInGroups[i].Email+"'></td>"+
+			//"<td><input type='checkbox' id='trch1' login='"+peopleNotInGroups[i].AccountName+"' login2='"+peopleNotInGroups[i].AccountName2+"' name='"+peopleNotInGroups[i].DisplayName+"' email='"+peopleNotInGroups[i].Email+"'></td>"+
+			"<td></td>"+
 			"<td><table class='small-table' id='ulp"+peopleNotInGroups[i].UserInfoID+"'>"+
-			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].UserInfoID+"</small></td></tr>"+
-			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].DisplayName+"</small></td></tr>"+
-			"<tr style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].AccountName+"</small></td></tr>"+
-			"<tr><td><small>"+peopleNotInGroups[i].Email+"</small></td></tr>"+
+			"<tr id='uId' style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].UserInfoID+"</small></td></tr>"+
+			"<tr id='name' style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].DisplayName+"</small></td></tr>"+
+			"<tr id='login' style='border-bottom: 1pt solid #ccc;'><td><small>"+peopleNotInGroups[i].AccountName+"</small></td></tr>"+
+			"<tr id='email'><td><small>"+peopleNotInGroups[i].Email+"</small></td></tr>"+
 			"</table></td>"+
 			"<td></td>"+
 			"</tr>";
@@ -344,7 +362,6 @@ function getGroups(login,userId){
 						var allSearchAjax = [],k=0;
 						$("#wait").show();
 						var usersXML = selectedUsersCollection();
-						//for (var k=0; k < userGroups.length; k++) {
 						var inter = setInterval(function () {
 							allSearchAjax.push(addUsersCollectionToGroup(userGroups[k],usersXML));
 							k+=1;
@@ -370,9 +387,6 @@ function getGroups(login,userId){
 
 function setMessage(message, log){
 	$("#message").fadeIn().append('<p><small>'+$.datepicker.formatDate( "dd-mm-yy ", new Date() ) + new Date().getHours() +":"+ new Date().getMinutes()+'>> '+message+'</small></p>');
-	/*setTimeout(function() {
-  		$("#message").fadeOut().empty();
-	}, 5000);*/
 	if(log == true)
 		$SP().list("SUGMO Logs").add({Title: message});
 }
@@ -404,7 +418,8 @@ function getAllGroups(){
 		var trGroup = '';
 		$(response).find("Group").each(function(){
 			trGroup +="<tr id="+$(this).attr("ID")+">"+
-			"<td><input type='checkbox' id='trch2' groupName='"+$(this).attr("Name")+"'></td>"+
+			//"<td><input type='checkbox' id='trch2' groupName='"+$(this).attr("Name")+"'></td>"+
+			"<td></td>"+
 			"<td><a href='/_layouts/editgrp.aspx?Group="+$(this).attr("Name")+"' target='_blank'>" + $(this).attr("ID") + "</a></td>"+
 			"<td><a href='/_layouts/people.aspx?MembershipGroupId="+$(this).attr("ID")+"' target='_blank'>" + $(this).attr("Name") + "</a></td>"+
 			"<td><small>"+$(this).attr("Description")+"</small></td>"+
@@ -434,7 +449,8 @@ function searchGroups(groupName){
 		var trGroup = '';
 		$(response).find("PrincipalInfo").each(function(index, el){
 			trGroup +="<tr id="+$(el).find("UserInfoID").text()+">"+
-			"<td><input type='checkbox' id='trch2' groupName='"+$(el).find("AccountName").text()+"'></td>"+
+			//"<td><input type='checkbox' id='trch2' groupName='"+$(el).find("AccountName").text()+"'></td>"+
+			"<td></td>"+
 			"<td><a href='/_layouts/editgrp.aspx?Group="+$(el).find("AccountName").text()+"' target='_blank'>" + $(el).find("UserInfoID").text() + "</a></td>"+
 			"<td><a href='/_layouts/people.aspx?MembershipGroupId="+$(el).find("UserInfoID").text()+"' target='_blank'>" + $(el).find("AccountName").text() + "</a></td>"+
 			"<td><small></small></td>"+
@@ -474,12 +490,19 @@ function rmGroup(groupName, notConfirm){
 
 function selectedUsersCollection(){
 	var xml = '<Users>';
-	$('input[id^=trch1]:checked').each(function(index, el) {
-		xml+='<User LoginName="'+$(el).attr("login")+'" '+ 
-      	'Email="'+$(el).attr("email")+'" '+
-      	'Name="'+$(el).attr("name")+'" '+
+	// $('input[id^=trch1]:checked').each(function(index, el) {
+	// 	xml+='<User LoginName="'+$(el).attr("login")+'" '+ 
+    //   	'Email="'+$(el).attr("email")+'" '+
+    //   	'Name="'+$(el).attr("name")+'" '+
+    //   	'Notes="" />'
+	// });
+	ut.rows({ selected: true }).every(function ( rowIdx, tableLoop, rowLoop ) {
+		var data = this.data();
+		xml+='<User LoginName="'+$(data[1]).find('#login').text()+'" '+ 
+      	'Email="'+$(data[1]).find('#email').text()+'" '+
+      	'Name="'+$(data[1]).find('#name').text()+'" '+
       	'Notes="" />'
-	});
+	} );
 	xml+='</Users>';
 	return(xml);
 }
@@ -504,14 +527,15 @@ function addUsersCollectionToGroup(groupName, usersXML){
 }
 
 function selectedUsersLogins(){
-	var total = $('input[id^=trch1]:checked').length;
 	var loginsString = '';
-	$('input[id^=trch1]:checked').each(function(index, el) {
-		if (index === total - 1) 
-			loginsString+=$(el).attr("login");
+	var total = ut.rows({ selected: true }).count();
+	ut.rows({ selected: true }).every(function ( rowIdx, tableLoop, rowLoop ) {
+		var data = this.data();
+		if (rowLoop === total - 1) 
+			loginsString+=$(data[1]).find('#login').text();
     	else
-			loginsString+=$(el).attr("login")+';';
-	});
+			loginsString+=$(data[1]).find('#login').text()+';';
+	} );
 	return loginsString;
 }
 
