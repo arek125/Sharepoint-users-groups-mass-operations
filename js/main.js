@@ -260,7 +260,7 @@ function usersSearch(line){
 	  			AccountName2: onlyDomain+'\\\\'+onlyLogin
 	  		})
 	  	});
-		if (people.length == 0)setMessage("Nie znaleziono: "+line, saveLogs);
+		if (people.length == 0)setMessage("Not found: "+line, false);
 		var peopleInGroups = $.grep(people,function(el,i){
 			return ( el.UserInfoID != -1);
 		});
